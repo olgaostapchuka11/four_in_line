@@ -2,56 +2,91 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+include 'functions.php';
 ?>
 
 <link rel="stylesheet" href="style.css">
 
 <?php
-$content = file_get_contents('four_in_line.json'); 
-$entries = json_decode($content, true);
-if (!is_array($entries)){
-    $entries=[];
+if (array_key_exists('reset', $_REQUEST)) {
+    resetEntries();
 }
 
-$entries['table'] = array_key_exists('table', $entries) ? $entries['table']: []; 
-$table = &$entries['table'];
+$entries = getEntries();
+$table = &getTable($entries);
 
-if (array_key_exists('r', $_REQUEST) && array_key_exists('c', $_REQUEST)) {
+if (array_key_exists('r', $_REQUEST) && 
+    array_key_exists('c', $_REQUEST)) {
     $r = $_REQUEST['r'];
     $c = $_REQUEST['c'];
-    echo "<h3>r=" . $r . "; c= " . $c . "</h3>";
-    
-    if(!array_key_exists('count', $entries)) {
-        $entries['count'] = 1;
-    }   else {
-        $entries['count']++;
-    }
-    
-    
-    $value = $entries['count'] % 2 === 0 ? 'x' : "o";
-    $table[$r][$c] = $value;
 
-    file_put_contents('four_in_line.json', json_encode($entries, JSON_PRETTY_PRINT));
+    $new_row = $r + 1;
+
+    if ($r == 9 || array_key_exists($new_row, $table) &&
+    array_key_exists($c, $table[$new_row]) &&
+    $table[$r + 1] != '') {
+
+        if (getEntry($table, $r, $c)  == 'O' || getEntry($table, $r, $c)  == 'x' ) {
+            echo "<h3>Поле занято</h3>";
+        } else {
+            if (!array_key_exists('count', $entries)) {
+                $entries['count'] = 1; 
+            } else {
+                $entries['count']++;
+            }
+            
+            if ($entries['count'] % 2 != 0) {
+                $table[$r][$c] = 'x';
+             } else {
+                $table[$r][$c] = '0';
+            }
+        }
+        saveEntries($entries);
+
+    }
 }
- 
+/*
+    // По Вертикали
+    if ($table[$r][$c] == $table[($r + 1)][$c]) {
+        if ($table[($r + 1)][($c)] == $table[($r + 2)][$c]) {
+            if ($table[($r + 2)][$c] == $table[($r + 3)][$c]) {
+                echo "<h3> Победил " . $table[$r][$c] . "</h3>";
+            } 
+        }
+    }
+
+/*
+    // По горизонтали ->
+    if ($table[$r][$c] == $table[$r][($c - 1)]) {
+        if ($table[$r][($c - 1)] == $table[$r][($c - 2)]) {
+            if ($table[$r][($c - 2)] == $table[$r][($c - 3)]) {
+                echo "<h3> Победил " . $table[$r][$c] . "</h3>";
+            }
+        }
+    }
+
+    // По горизонтали <-
+    if ($table[$r][$c] == $table[$r][($c + 1)]) {
+        if ($table[$r][($c + 1)] == $table[$r][($c + 2)]) {
+            if ($table[$r][($c + 2)] == $table[$r][($c + 3)]) {
+                echo "<h3> Победил " . $table[$r][$c] . "</h3>";
+            }
+        }
+    }
+*/
 ?>
 
 <div class="container">
     <?php 
     for($r = 0; $r <= 9; $r++){
        for($c = 0; $c <= 9; $c++) {
-    
-        $value = '';
-        if ($r === 9 && $c === 2) {
-            $value = 'x';
-        } 
-  
-        
-        echo "<a href='?r=$r&c=$c'>" . $value . "</a>";
+        echo "<a href='?r=$r&c=$c'>" . getEntry($table, $r, $c) . "</a>";
        }
     }
+
 ?>
 </div>
 
 
+<a href="?reset=Reset">RESET</a>
 
